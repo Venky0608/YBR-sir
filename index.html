@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>YBR</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&amp;family=Playfair+Display:ital,wght@0,600;0,700;0,800;0,900;1,600;1,700&amp;display=swap">
+<style>
+  :root {
+    color-scheme: dark;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+
+    --black: #000000;
+    --gold: #d4af37;
+    --gold-soft: #c5a059;
+    --gold-dim: rgba(212, 175, 55, 0.45);
+    --gold-faint: rgba(212, 175, 55, 0.1);
+    --white: #ffffff;
+    --white-dim: rgba(255, 255, 255, 0.68);
+    --white-faint: rgba(255, 255, 255, 0.2);
+    --coral: #ff5a4d;
+
+    --serif: "Playfair Display", "Didot", "Bodoni MT", "Bodoni 72", Georgia, "Times New Roman", serif;
+    --sans: "Jost", "Avenir Next", "Century Gothic", "Segoe UI", system-ui, -apple-system, sans-serif;
+    --fade: 0.6s;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--black);
+    background-image:
+      radial-gradient(ellipse 85% 55% at 50% 0%, rgba(212, 175, 55, 0.09), transparent 70%),
+      radial-gradient(ellipse 60% 40% at 50% 110%, rgba(212, 175, 55, 0.06), transparent 70%);
+    background-attachment: fixed;
+    color: var(--white);
+    font-family: var(--sans);
+    font-weight: 400;
+    font-size: clamp(17px, 0.9vw + 12px, 20px);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    font-variant-numeric: lining-nums;
+    font-feature-settings: "lnum" 1;
+    overflow: hidden;
+  }
+
+  /* ---------- Stage & slides ---------- */
+  .stage { position: fixed; inset: 0; }
+  .slide {
+    position: absolute; inset: 0;
+    display: flex;
+    overflow-y: auto; overflow-x: hidden;
+    padding: clamp(24px, 5vh, 56px) clamp(20px, 5vw, 64px) clamp(28px, 5vh, 48px);
+    opacity: 0; visibility: hidden;
+    transition: opacity var(--fade) ease, visibility 0s linear var(--fade);
+  }
+  .slide.active {
+    opacity: 1; visibility: visible;
+    transition: opacity var(--fade) ease 0.35s, visibility 0s linear 0s;
+  }
+  .inner { position: relative; z-index: 1; margin: auto; width: 100%; max-width: 720px; text-align: center; }
+  .inner.wide { max-width: 780px; }
+
+  /* ---------- Type ---------- */
+  .metal {
+    background: linear-gradient(180deg, #f8e9ae 0%, #d4af37 48%, #a67c1a 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+    filter: drop-shadow(0 0 22px rgba(212, 175, 55, 0.32));
+  }
+  h1, h2 { margin: 0; font-family: var(--serif); font-weight: 800; letter-spacing: 0.005em; text-wrap: balance; }
+  h2 { font-size: clamp(36px, 5.8vw, 64px); line-height: 1.08; margin-bottom: clamp(18px, 3vh, 30px); }
+  .huge { font-size: clamp(50px, 12vw, 128px); line-height: 1; font-weight: 900; margin-bottom: clamp(22px, 4vh, 38px); }
+  p { margin: 0 0 1.1em; text-wrap: pretty; }
+  .body { max-width: 56ch; margin-left: auto; margin-right: auto; color: var(--white); font-size: 1.08em; }
+  .body strong { color: var(--gold); font-weight: 600; }
+  .qnum { margin: 0 0 6px; font-family: var(--serif); font-style: italic; font-weight: 600; color: var(--gold-soft); font-size: 1.15em; }
+  .prompt { margin: 0 0 10px; color: var(--white-dim); }
+  .equation {
+    margin: 0 0 clamp(28px, 5vh, 46px);
+    font-family: var(--serif);
+    font-weight: 800;
+    font-size: clamp(40px, 8.4vw, 84px);
+    line-height: 1.1;
+    letter-spacing: 0.01em;
+  }
+  .equation i { font-weight: 700; color: var(--gold); }
+  .equation .cond { display: block; margin-top: 10px; font-family: var(--sans); font-size: 0.3em; font-weight: 400; color: var(--white-dim); letter-spacing: 0.03em; }
+
+  /* ---------- Inputs (prominent) ---------- */
+  input[type="text"] {
+    font: inherit;
+    color: var(--white);
+    background: rgba(212, 175, 55, 0.05);
+    border: 2px solid var(--gold-dim);
+    border-radius: 3px;
+    padding: 0.7em 0.9em;
+    outline: none;
+    text-align: center;
+    caret-color: var(--gold);
+    box-shadow: 0 0 24px rgba(212, 175, 55, 0.12), inset 0 0 18px rgba(212, 175, 55, 0.05);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+  }
+  input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.3); }
+  input[type="text"]:focus {
+    border-color: var(--gold);
+    background: rgba(212, 175, 55, 0.09);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.22), 0 0 36px rgba(212, 175, 55, 0.4);
+  }
+  input[type="text"]:disabled { opacity: 0.7; }
+
+  .answer-row { display: flex; align-items: center; justify-content: center; gap: clamp(12px, 2.4vw, 22px); margin-bottom: 26px; }
+  .answer-row .var { font-family: var(--serif); font-style: italic; font-weight: 700; font-size: clamp(30px, 5vw, 46px); color: var(--gold); }
+  .answer {
+    width: clamp(150px, 30vw, 220px);
+    font-family: var(--serif); font-weight: 800;
+    font-size: clamp(34px, 6vw, 52px);
+    line-height: 1.1;
+  }
+  .stack { display: flex; flex-direction: column; align-items: center; }
+
+  /* ---------- Buttons ---------- */
+  button {
+    font-family: var(--sans);
+    font-size: 1.02em;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    color: var(--gold);
+    background: transparent;
+    border: 1.5px solid var(--gold);
+    border-radius: 3px;
+    padding: 0.95em 2.3em;
+    cursor: pointer;
+    box-shadow: 0 0 0 rgba(212, 175, 55, 0);
+    transition: color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease, border-color 0.3s ease;
+  }
+  button:hover:not(:disabled) {
+    color: var(--white);
+    background: rgba(212, 175, 55, 0.15);
+    border-color: #f0cf6a;
+    box-shadow: 0 0 24px rgba(212, 175, 55, 0.55), inset 0 0 16px rgba(212, 175, 55, 0.14);
+  }
+  button:active:not(:disabled) { transform: translateY(1px); }
+  button:disabled { opacity: 0.45; cursor: default; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--white); outline-offset: 3px; }
+
+  /* ---------- Feedback ---------- */
+  .msg { min-height: 1.7em; margin: 18px 0 0; font-size: 0.88em; color: var(--white-dim); }
+  .msg.gold { color: var(--gold); }
+  .shake { animation: shake 0.42s cubic-bezier(.36,.07,.19,.97); }
+  @keyframes shake {
+    10%, 90% { transform: translateX(-2px); }
+    20%, 80% { transform: translateX(4px); }
+    30%, 50%, 70% { transform: translateX(-7px); }
+    40%, 60% { transform: translateX(7px); }
+  }
+  @keyframes appear { to { opacity: 1; } }
+
+  /* ---------- Landing ---------- */
+  .land-bg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  .land-line { stroke-dasharray: 1; stroke-dashoffset: 1; }
+  .land-dot, .land-ring { opacity: 0; }
+  .slide.active .land-line { animation: draw 2.4s cubic-bezier(.5,0,.2,1) 0.6s forwards; }
+  .slide.active .land-line.two { animation-delay: 1s; }
+  .slide.active .land-dot { animation: appear 0.6s ease 2.9s forwards; }
+  .slide.active .land-ring { animation: ring 2.6s ease-out 3.2s infinite; }
+  .land-title { font-size: clamp(110px, 27vw, 270px); line-height: 0.92; font-weight: 900; letter-spacing: 0.03em; padding: 0 0 0.04em 0.03em; }
+  .land-in { opacity: 0; }
+  .slide.active .land-in { animation: appear 1s ease forwards; }
+  .slide.active .d1 { animation-delay: 0.7s; }
+  .slide.active .d2 { animation-delay: 1.5s; }
+  .slide.active .d3 { animation-delay: 1.8s; }
+  .slide.active .d4 { animation-delay: 2.2s; }
+  .land-rule { width: 84px; height: 1.5px; margin: clamp(20px, 4vh, 34px) auto; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+  .land-sub { max-width: 26ch; margin: 0 auto clamp(28px, 5vh, 44px); font-family: var(--serif); font-style: italic; font-weight: 600; font-size: clamp(22px, 2.9vw, 32px); line-height: 1.35; color: var(--white); }
+  .btn-big { font-size: 1.12em; padding: 1.05em 3.2em; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  @keyframes ring { 0% { opacity: 0.8; transform: scale(1); } 100% { opacity: 0; transform: scale(4.2); } }
+
+  /* ---------- Realization (date) ---------- */
+  .date-row { display: flex; align-items: center; justify-content: center; gap: clamp(12px, 2.6vw, 26px); margin-top: 12px; }
+  .date-row input {
+    width: clamp(112px, 22vw, 168px);
+    font-family: var(--serif); font-weight: 900;
+    font-size: clamp(46px, 9vw, 78px);
+    line-height: 1.1;
+    letter-spacing: 0.04em;
+    padding: 0.35em 0.2em;
+    border-width: 2.5px;
+  }
+  .date-row .slash { font-family: var(--serif); font-weight: 400; font-size: clamp(48px, 8vw, 78px); color: var(--gold); line-height: 1; }
+
+  /* ---------- Access ---------- */
+  .accent-line { font-family: var(--serif); font-style: italic; font-weight: 600; font-size: clamp(24px, 3.6vw, 36px); margin: 0 0 2em; color: var(--white); }
+
+  /* ---------- Calculator keypad ---------- */
+  .calc { width: min(100%, 410px); margin: 26px auto 0; }
+  .display {
+    width: 100%;
+    height: clamp(72px, 11vh, 92px);
+    padding: 0 0.6em;
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: clamp(24px, 4.6vw, 32px);
+    letter-spacing: 0.02em;
+    text-overflow: ellipsis;
+  }
+  .display::placeholder { font-family: var(--sans); font-weight: 400; font-size: 0.6em; letter-spacing: 0.02em; }
+  .display.is-result {
+    color: var(--gold);
+    font-weight: 900;
+    font-size: clamp(34px, 7vw, 46px);
+    letter-spacing: 0.08em;
+    border-color: var(--gold);
+    text-shadow: 0 0 22px rgba(212, 175, 55, 0.7);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2), 0 0 44px rgba(212, 175, 55, 0.5);
+    animation: pop 0.45s cubic-bezier(.2,.9,.3,1.3);
+  }
+  @keyframes pop { 0% { transform: scale(0.95); } 100% { transform: scale(1); } }
+  .keypad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px; }
+  .key {
+    padding: 0;
+    height: clamp(46px, 7vh, 58px);
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: clamp(20px, 2.6vw, 25px);
+    letter-spacing: 0;
+    color: var(--white);
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid var(--white-faint);
+  }
+  .key.op { color: var(--gold); border-color: var(--gold-dim); }
+  .key.fn { font-family: var(--sans); font-weight: 500; font-size: clamp(17px, 2.2vw, 20px); color: var(--gold-soft); border-color: var(--gold-dim); }
+  .key.go {
+    grid-column: 1 / -1;
+    height: clamp(50px, 7.6vh, 62px);
+    font-family: var(--sans); font-weight: 500; font-size: 1.05em; letter-spacing: 0.1em;
+    color: var(--gold); border: 1.5px solid var(--gold);
+    background: rgba(212, 175, 55, 0.08);
+  }
+  .key:hover:not(:disabled) { color: var(--white); border-color: #f0cf6a; background: rgba(212, 175, 55, 0.16); }
+  .proof-block { margin-top: 30px; opacity: 0; transform: translateY(8px); transition: opacity 0.8s ease, transform 0.8s ease; }
+  .proof-block[hidden] { display: none; }
+  .proof-block.show { opacity: 1; transform: none; }
+  .proof { max-width: 56ch; margin: 0 auto 26px; font-size: 1.08em; }
+  .proof b { color: var(--gold); font-weight: 600; }
+
+  /* ---------- Graph ---------- */
+  .graph-wrap { width: 100%; margin: 0 auto clamp(22px, 3.5vh, 34px); border: 1px solid var(--gold-dim); border-radius: 3px; padding: clamp(8px, 2vw, 18px); background: #060606; box-shadow: 0 0 44px rgba(212, 175, 55, 0.1); }
+  #graph { display: block; width: 100%; height: auto; }
+  #graph text { font-family: var(--sans); }
+  #graph .g-label { font-family: var(--serif); }
+  .g-line { stroke-dasharray: 1; stroke-dashoffset: 1; }
+  .g-guide, .g-point, .g-label, .g-ring { opacity: 0; }
+  .g-ring { transform-box: fill-box; transform-origin: center; }
+  .slide.active .g-line { animation: draw 1.6s cubic-bezier(.5,0,.2,1) 0.9s forwards; }
+  .slide.active .g-line.two { animation-delay: 1.3s; }
+  .slide.active .g-guide { animation: appear 0.7s ease 2.5s forwards; }
+  .slide.active .g-point { animation: appear 0.4s ease 2.7s forwards; }
+  .slide.active .g-label { animation: appear 0.7s ease 3s forwards; }
+  .slide.active .g-ring { animation: ring 2.4s ease-out 3s infinite; }
+
+  /* ---------- Final ---------- */
+  .processing { visibility: hidden; margin-top: 22px; color: var(--gold); letter-spacing: 0.1em; }
+  .processing.on { visibility: visible; }
+  .processing i { font-style: normal; animation: blink 1s infinite; }
+  .processing i:nth-child(2) { animation-delay: 0.2s; }
+  .processing i:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%, 100% { opacity: 0.15; } 50% { opacity: 1; } }
+  .final-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 16px; margin-top: 18px; }
+  .final-row input { width: min(100%, 360px); font-family: var(--serif); font-weight: 700; font-size: clamp(24px, 4vw, 32px); }
+
+  /* ---------- Error pop-up ---------- */
+  .modal {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(0, 0, 0, 0.76);
+    -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px);
+    opacity: 0; transition: opacity 0.3s ease;
+  }
+  .modal[hidden] { display: none; }
+  .modal.show { opacity: 1; }
+  .modal-card {
+    width: min(100%, 540px);
+    max-height: 100%; overflow-y: auto;
+    padding: 30px 30px 28px;
+    text-align: left;
+    background: #070707;
+    border: 1px solid var(--coral);
+    border-top: 5px solid var(--coral);
+    border-radius: 3px;
+    box-shadow: 0 0 70px rgba(255, 90, 77, 0.34), 0 30px 90px rgba(0, 0, 0, 0.85);
+    transform: translateY(14px) scale(0.96);
+    transition: transform 0.4s cubic-bezier(.2,.9,.3,1.25);
+  }
+  .modal.show .modal-card { transform: none; }
+  .err-icon { display: grid; place-items: center; width: 42px; height: 42px; margin-bottom: 18px; border: 2px solid var(--coral); border-radius: 50%; color: var(--coral); font-family: var(--serif); font-weight: 900; font-size: 24px; line-height: 1; }
+  .err-code { margin: 0 0 12px; color: var(--coral); font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace; font-weight: 700; font-size: 0.92em; line-height: 1.5; word-break: break-word; }
+  .err-body { margin: 0 0 6px; color: var(--coral); font-size: 1.05em; }
+  .err-miss { margin: 0 0 26px; color: var(--coral); font-family: var(--serif); font-weight: 800; font-size: clamp(24px, 4vw, 30px); line-height: 1.25; }
+  .btn-coral { color: var(--coral); border-color: var(--coral); }
+  .btn-coral:hover:not(:disabled) { color: var(--white); background: rgba(255, 90, 77, 0.16); border-color: #ff8a80; box-shadow: 0 0 24px rgba(255, 90, 77, 0.55), inset 0 0 14px rgba(255, 90, 77, 0.14); }
+  .modal.show .modal-card { animation: alarm 0.5s steps(2, end) 1; }
+  @keyframes alarm { 0% { opacity: 0.3; } 40% { opacity: 1; } 55% { opacity: 0.55; } 100% { opacity: 1; } }
+
+  @media (max-width: 520px) {
+    .key { border-radius: 2px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001s !important; animation-delay: 0s !important; transition-duration: 0.001s !important; transition-delay: 0s !important; }
+  }
+</style>
+</head>
+<body>
+
+<main class="stage" id="stage">
+
+  <!-- Slide 1: Landing -->
+  <section class="slide" data-slide="0" aria-label="Welcome">
+    <svg class="land-bg" id="landBg" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+    <div class="inner">
+      <h1 class="land-title metal land-in d1">YBR</h1>
+      <div class="land-rule land-in d2"></div>
+      <p class="land-sub land-in d3">Four problems stand between you and access.</p>
+      <button type="button" class="btn-big land-in d4" data-next>Begin</button>
+    </div>
+  </section>
+
+  <!-- Slide 2: Q1 -->
+  <section class="slide" data-slide="1" aria-label="Question 1">
+    <div class="inner">
+      <p class="qnum">Question 1</p>
+      <p class="prompt">Find the value of x if:</p>
+      <div class="equation" aria-label="3x minus 4 equals 2">3<i>x</i> − 4 = 2</div>
+      <div class="answer-row">
+        <label class="var" for="q1">x =</label>
+        <input id="q1" class="answer" type="text" inputmode="numeric" autocomplete="off" placeholder="?" data-answer="2" data-msg="m1">
+      </div>
+      <button type="button" data-submit="q1">Submit</button>
+      <p class="msg" id="m1" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <!-- Slide 3: Q2 -->
+  <section class="slide" data-slide="2" aria-label="Question 2">
+    <div class="inner">
+      <p class="qnum">Question 2</p>
+      <p class="prompt">Find the value of y if:</p>
+      <div class="equation" aria-label="2y plus 3 equals 17">2<i>y</i> + 3 = 17</div>
+      <div class="answer-row">
+        <label class="var" for="q2">y =</label>
+        <input id="q2" class="answer" type="text" inputmode="numeric" autocomplete="off" placeholder="?" data-answer="7" data-msg="m2">
+      </div>
+      <button type="button" data-submit="q2">Submit</button>
+      <p class="msg" id="m2" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <!-- Slide 4: Q3 (new, answer 0) -->
+  <section class="slide" data-slide="3" aria-label="Question 3">
+    <div class="inner">
+      <p class="qnum">Question 3</p>
+      <p class="prompt">Find the value of n if:</p>
+      <div class="equation" aria-label="9n minus 5 equals 4n minus 5">9<i>n</i> − 5 = 4<i>n</i> − 5</div>
+      <div class="answer-row">
+        <label class="var" for="q3">n =</label>
+        <input id="q3" class="answer" type="text" inputmode="numeric" autocomplete="off" placeholder="?" data-answer="0" data-msg="m3">
+      </div>
+      <button type="button" data-submit="q3">Submit</button>
+      <p class="msg" id="m3" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <!-- Slide 5: Q4 -->
+  <section class="slide" data-slide="4" aria-label="Question 4">
+    <div class="inner">
+      <p class="qnum">Question 4</p>
+      <p class="prompt">Find the value of z if:</p>
+      <div class="equation" aria-label="z squared minus 49 equals 0, where z is greater than 0"><i>z</i>² − 49 = 0<span class="cond">(where z &gt; 0)</span></div>
+      <div class="answer-row">
+        <label class="var" for="q4">z =</label>
+        <input id="q4" class="answer" type="text" inputmode="numeric" autocomplete="off" placeholder="?" data-answer="7" data-msg="m4">
+      </div>
+      <button type="button" data-submit="q4">Submit</button>
+      <p class="msg" id="m4" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <!-- Slide 6: The Realization -->
+  <section class="slide" data-slide="5" aria-label="The realization">
+    <div class="inner">
+      <h2 class="huge metal">HOLD UP...</h2>
+      <p class="body">Look at the answers you just solved: <strong>2, 7, 0, and 7</strong>. I think these numbers form a specific date.</p>
+      <p class="body" style="color:var(--white-dim)">Hint: The day our math teacher was brought into this world.</p>
+      <div class="date-row" role="group" aria-label="Date, day and month">
+        <input id="dd" type="text" inputmode="numeric" maxlength="2" autocomplete="off" placeholder="DD" aria-label="Day (DD)">
+        <span class="slash" aria-hidden="true">/</span>
+        <input id="mm" type="text" inputmode="numeric" maxlength="2" autocomplete="off" placeholder="MM" aria-label="Month (MM)">
+      </div>
+      <p class="msg" id="mDate" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <!-- Slide 7: Access granted -->
+  <section class="slide" data-slide="6" aria-label="Access granted">
+    <div class="inner">
+      <h2 class="metal">Access Granted.</h2>
+      <p class="accent-line">Oh yeah, that's your birthday.</p>
+      <button type="button" data-next>Initialize YBR Calculator</button>
+    </div>
+  </section>
+
+  <!-- Slide 8: Calculator -->
+  <section class="slide" data-slide="7" aria-label="The YBR Calculator">
+    <div class="inner">
+      <h2 class="metal">The YBR Calculator</h2>
+      <p class="body" style="margin-bottom:0">Enter any mathematical query to run the solver:</p>
+      <div class="calc">
+        <input id="display" class="display" type="text" inputmode="none" autocomplete="off" spellcheck="false" placeholder="e.g., Prove why 1 + 1 = 2" aria-label="Mathematical query">
+        <div class="keypad" id="keypad" role="group" aria-label="Calculator keypad">
+          <button type="button" class="key fn" data-act="clear" aria-label="Clear">C</button>
+          <button type="button" class="key fn" data-act="back" aria-label="Backspace">⌫</button>
+          <button type="button" class="key op" data-key="(">(</button>
+          <button type="button" class="key op" data-key=")">)</button>
+
+          <button type="button" class="key" data-key="7">7</button>
+          <button type="button" class="key" data-key="8">8</button>
+          <button type="button" class="key" data-key="9">9</button>
+          <button type="button" class="key op" data-key="÷" aria-label="Divide">÷</button>
+
+          <button type="button" class="key" data-key="4">4</button>
+          <button type="button" class="key" data-key="5">5</button>
+          <button type="button" class="key" data-key="6">6</button>
+          <button type="button" class="key op" data-key="×" aria-label="Multiply">×</button>
+
+          <button type="button" class="key" data-key="1">1</button>
+          <button type="button" class="key" data-key="2">2</button>
+          <button type="button" class="key" data-key="3">3</button>
+          <button type="button" class="key op" data-key="−" aria-label="Minus">−</button>
+
+          <button type="button" class="key" data-key="0">0</button>
+          <button type="button" class="key" data-key=".">.</button>
+          <button type="button" class="key op" data-key="=">=</button>
+          <button type="button" class="key op" data-key="+" aria-label="Plus">+</button>
+
+          <button type="button" class="key go" data-act="calc">Calculate</button>
+        </div>
+      </div>
+      <p class="msg" id="m6" role="status" aria-live="polite"></p>
+      <div class="proof-block" id="proofBlock" hidden>
+        <p class="proof"><b>Proof:</b> Since your query structurally evaluates to a mathematical limit approaching YBR, the ultimate coordinate simplifies back to <b>27/7</b>.</p>
+        <button type="button" data-next>Continue to Core System</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 9: Graph -->
+  <section class="slide" data-slide="8" aria-label="The Intersection Theorem">
+    <div class="inner wide">
+      <h2 class="metal">The Intersection Theorem</h2>
+      <div class="graph-wrap">
+        <svg id="graph" viewBox="0 0 600 340" role="img" aria-label="Coordinate graph with two lines crossing at the point (27, 7)"></svg>
+      </div>
+      <p class="body">In geometry, an intersection point is brief, but it changes the direction of the lines forever. Our paths crossed in this classroom, and the trajectory is changed permanently.</p>
+      <button type="button" data-next>Next Proof</button>
+    </div>
+  </section>
+
+  <!-- Slide 10: Final -->
+  <section class="slide" data-slide="9" aria-label="Final problem">
+    <div class="inner">
+      <h2 class="metal">Final Problem</h2>
+      <p class="body">Question 5: Calculate the exact replacement value for YBR.</p>
+      <div class="final-row">
+        <input id="final" type="text" autocomplete="off" placeholder="Enter a value" aria-label="Replacement value for YBR">
+        <button type="button" id="solve">Solve Equation</button>
+      </div>
+      <p class="msg" id="m8" role="status" aria-live="polite"></p>
+      <div class="processing" id="processing" aria-live="polite">Processing<i>.</i><i>.</i><i>.</i></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Error pop-up -->
+<div class="modal" id="modal" role="alertdialog" aria-modal="true" aria-labelledby="errCode" aria-describedby="errBody" hidden>
+  <div class="modal-card">
+    <div class="err-icon" aria-hidden="true">!</div>
+    <p class="err-code" id="errCode">CRITICAL ERROR: Math.Error_IrreplaceableVariable.</p>
+    <p class="err-body" id="errBody">No solution found. Some variables can never be replaced.</p>
+    <p class="err-miss">We are going to miss you, YBR Sir.</p>
+    <button type="button" class="btn-coral" id="closeErr">Close</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var stage = document.getElementById('stage');
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var current = -1;
+  var locked = false;
+
+  function go(n) {
+    if (locked || n === current || n < 0 || n >= slides.length) return;
+    locked = true;
+    slides.forEach(function (s, i) {
+      var on = i === n;
+      s.classList.toggle('active', on);
+      if (on) { s.removeAttribute('inert'); s.removeAttribute('aria-hidden'); }
+      else { s.setAttribute('inert', ''); s.setAttribute('aria-hidden', 'true'); }
+    });
+    current = n;
+    setTimeout(function () {
+      var first = slides[n].querySelector('input:not([disabled]), button');
+      if (first) { try { first.focus({ preventScroll: true }); } catch (e) { first.focus(); } }
+      locked = false;
+    }, 950);
+  }
+  function next() { go(current + 1); }
+
+  function nudge(el) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
+
+  /* ----- Landing background motif ----- */
+  (function () {
+    var svg = document.getElementById('landBg');
+    var out = '';
+    var i;
+    for (i = 0; i <= 1000; i += 100) out += '<line x1="' + i + '" y1="0" x2="' + i + '" y2="600" stroke="rgba(212,175,55,0.08)" stroke-width="1"/>';
+    for (i = 0; i <= 600; i += 100) out += '<line x1="0" y1="' + i + '" x2="1000" y2="' + i + '" stroke="rgba(212,175,55,0.08)" stroke-width="1"/>';
+    out += '<line class="land-line" pathLength="1" x1="100" y1="520" x2="1000" y2="70" stroke="rgba(255,255,255,0.32)" stroke-width="1.4"/>';
+    out += '<line class="land-line two" pathLength="1" x1="240" y1="60" x2="1000" y2="421" stroke="rgba(212,175,55,0.6)" stroke-width="1.4"/>';
+    out += '<circle class="land-ring" cx="640" cy="250" r="5" fill="none" stroke="#d4af37" stroke-width="1.2" style="transform-box:fill-box;transform-origin:center"/>';
+    out += '<circle class="land-dot" cx="640" cy="250" r="5" fill="#d4af37" style="filter:drop-shadow(0 0 8px rgba(212,175,55,0.9))"/>';
+    svg.innerHTML = out;
+  })();
+
+  /* ----- Numeric questions ----- */
+  function isAnswer(value, target) {
+    var v = value.trim();
+    return v !== '' && /^-?\d+(\.\d+)?$/.test(v) && Number(v) === Number(target);
+  }
+  function check(input) {
+    var msg = document.getElementById(input.dataset.msg);
+    var v = input.value.trim();
+    if (v === '') {
+      msg.textContent = 'Enter a number to continue.'; msg.classList.remove('gold');
+      nudge(input); return;
+    }
+    if (isAnswer(v, input.dataset.answer)) {
+      msg.textContent = 'Correct.';
+      msg.classList.add('gold');
+      input.disabled = true;
+      setTimeout(next, 650);
+    } else {
+      msg.textContent = 'Not quite. Recalculate and try again.';
+      msg.classList.remove('gold');
+      nudge(input);
+      input.select();
+    }
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('[data-answer]'), function (input) {
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') check(input); });
+    input.addEventListener('input', function () {
+      var m = document.getElementById(input.dataset.msg);
+      m.textContent = ''; m.classList.remove('gold');
+    });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-submit]'), function (btn) {
+    btn.addEventListener('click', function () { check(document.getElementById(btn.dataset.submit)); });
+  });
+
+  /* ----- Date ----- */
+  var dd = document.getElementById('dd');
+  var mm = document.getElementById('mm');
+  var mDate = document.getElementById('mDate');
+  var dateDone = false;
+  function digitsOnly(el) { el.value = el.value.replace(/\D/g, ''); }
+  function checkDate() {
+    if (dateDone) return;
+    var d = dd.value, m = mm.value;
+    var ok = d.length === 2 && /^\d{1,2}$/.test(m) && parseInt(d, 10) === 27 && parseInt(m, 10) === 7;
+    if (ok) {
+      dateDone = true;
+      mDate.textContent = 'Match found.';
+      mDate.classList.add('gold');
+      dd.disabled = true; mm.disabled = true;
+      setTimeout(next, 800);
+      return;
+    }
+    mDate.classList.remove('gold');
+    var complete = d.length === 2 && (m.length === 2 || (m.length === 1 && m !== '0'));
+    mDate.textContent = complete ? 'That date does not match. Check the hint.' : '';
+  }
+  dd.addEventListener('input', function () {
+    digitsOnly(dd);
+    if (dd.value.length === 2 && !dd.disabled) mm.focus();
+    checkDate();
+  });
+  mm.addEventListener('input', function () { digitsOnly(mm); checkDate(); });
+  mm.addEventListener('keydown', function (e) { if (e.key === 'Backspace' && mm.value === '') dd.focus(); });
+
+  /* ----- Generic next buttons ----- */
+  Array.prototype.forEach.call(document.querySelectorAll('[data-next]'), function (b) {
+    b.addEventListener('click', next);
+  });
+
+  /* ----- Calculator keypad ----- */
+  var disp = document.getElementById('display');
+  var keypad = document.getElementById('keypad');
+  var m6 = document.getElementById('m6');
+  var proofBlock = document.getElementById('proofBlock');
+  var showingResult = false;
+  var runs = 0;
+  var revealed = false;
+
+  function say(text, gold) { m6.textContent = text; m6.classList.toggle('gold', !!gold); }
+  function resetDisplay() {
+    if (!showingResult) return;
+    disp.value = '';
+    disp.classList.remove('is-result');
+    showingResult = false;
+  }
+  function insertText(str) {
+    resetDisplay();
+    var s = disp.selectionStart, e = disp.selectionEnd;
+    if (typeof s !== 'number') { s = e = disp.value.length; }
+    disp.value = disp.value.slice(0, s) + str + disp.value.slice(e);
+    var p = s + str.length;
+    disp.setSelectionRange(p, p);
+    say('');
+  }
+  function backspace() {
+    if (showingResult) { resetDisplay(); return; }
+    var s = disp.selectionStart, e = disp.selectionEnd;
+    if (typeof s !== 'number') { s = e = disp.value.length; }
+    if (s !== e) { disp.value = disp.value.slice(0, s) + disp.value.slice(e); disp.setSelectionRange(s, s); }
+    else if (s > 0) { disp.value = disp.value.slice(0, s - 1) + disp.value.slice(s); disp.setSelectionRange(s - 1, s - 1); }
+    say('');
+  }
+  function reveal() {
+    if (revealed) return;
+    revealed = true;
+    proofBlock.hidden = false;
+    void proofBlock.offsetWidth;
+    proofBlock.classList.add('show');
+    var btn = proofBlock.querySelector('button');
+    setTimeout(function () {
+      proofBlock.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      try { btn.focus({ preventScroll: true }); } catch (e) { btn.focus(); }
+    }, 750);
+  }
+  function runCalc() {
+    if (showingResult) { say('Enter a new query to run the solver again.'); nudge(disp); return; }
+    if (disp.value.trim() === '') { say('Enter a query first. Any query will do.'); nudge(disp); return; }
+    runs++;
+    showingResult = true;
+    disp.value = 'OBVIOUS!';
+    disp.classList.remove('is-result'); void disp.offsetWidth;
+    disp.classList.add('is-result');
+    if (runs < 3) say('Run ' + runs + ' of 3 complete. Enter another query.', true);
+    else { say('Run ' + Math.min(runs, 3) + ' of 3 complete.', true); reveal(); }
+  }
+
+  // keep the caret in the display while pressing keys with a mouse
+  keypad.addEventListener('mousedown', function (e) { e.preventDefault(); });
+  keypad.addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    if (b.dataset.key) insertText(b.dataset.key);
+    else if (b.dataset.act === 'clear') { showingResult = true; resetDisplay(); disp.value = ''; say(''); }
+    else if (b.dataset.act === 'back') backspace();
+    else if (b.dataset.act === 'calc') runCalc();
+  });
+  disp.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); runCalc(); return; }
+    if (showingResult && !e.ctrlKey && !e.metaKey && !e.altKey && (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete')) resetDisplay();
+  });
+  disp.addEventListener('paste', function () { resetDisplay(); });
+  disp.addEventListener('input', function () { if (!showingResult) say(''); });
+
+  /* ----- Graph ----- */
+  (function () {
+    var svg = document.getElementById('graph');
+    var L = 54, R = 576, T = 20, B = 300, XMAX = 30, YMAX = 10;
+    var sx = function (x) { return L + (R - L) * x / XMAX; };
+    var sy = function (y) { return B - (B - T) * y / YMAX; };
+    var GOLD = '#d4af37', WHITE = '#ffffff';
+    var out = '', x, y;
+
+    for (x = 0; x <= XMAX; x += 5) {
+      if (x > 0) out += '<line x1="' + sx(x) + '" y1="' + T + '" x2="' + sx(x) + '" y2="' + B + '" stroke="rgba(212,175,55,0.18)" stroke-width="1"/>';
+      out += '<text x="' + sx(x) + '" y="' + (B + 20) + '" fill="rgba(255,255,255,0.65)" font-size="12" text-anchor="middle">' + x + '</text>';
+    }
+    for (y = 0; y <= YMAX; y += 2) {
+      if (y > 0) out += '<line x1="' + L + '" y1="' + sy(y) + '" x2="' + R + '" y2="' + sy(y) + '" stroke="rgba(212,175,55,0.18)" stroke-width="1"/>';
+      out += '<text x="' + (L - 12) + '" y="' + (sy(y) + 4) + '" fill="rgba(255,255,255,0.65)" font-size="12" text-anchor="end">' + y + '</text>';
+    }
+    out += '<line x1="' + L + '" y1="' + B + '" x2="' + (R + 8) + '" y2="' + B + '" stroke="' + WHITE + '" stroke-width="1.5"/>';
+    out += '<line x1="' + L + '" y1="' + B + '" x2="' + L + '" y2="' + (T - 8) + '" stroke="' + WHITE + '" stroke-width="1.5"/>';
+    out += '<path d="M' + (R + 8) + ' ' + B + ' l-6 -3.5 v7 z" fill="' + WHITE + '"/>';
+    out += '<path d="M' + L + ' ' + (T - 8) + ' l-3.5 6 h7 z" fill="' + WHITE + '"/>';
+
+    out += '<line class="g-line" pathLength="1" x1="' + sx(0) + '" y1="' + sy(0) + '" x2="' + sx(30) + '" y2="' + sy(7 * 30 / 27) + '" stroke="' + WHITE + '" stroke-width="1.6" stroke-linecap="round"/>';
+    out += '<line class="g-line two" pathLength="1" x1="' + sx(24) + '" y1="' + sy(10) + '" x2="' + sx(30) + '" y2="' + sy(4) + '" stroke="' + GOLD + '" stroke-width="1.6" stroke-linecap="round"/>';
+
+    var px = sx(27), py = sy(7);
+    out += '<g class="g-guide">' +
+      '<line x1="' + px + '" y1="' + py + '" x2="' + px + '" y2="' + B + '" stroke="' + GOLD + '" stroke-width="1" stroke-dasharray="4 5"/>' +
+      '<line x1="' + L + '" y1="' + py + '" x2="' + px + '" y2="' + py + '" stroke="' + GOLD + '" stroke-width="1" stroke-dasharray="4 5"/>' +
+      '<text x="' + px + '" y="' + (B + 20) + '" fill="' + GOLD + '" font-size="13" font-weight="600" text-anchor="middle">27</text>' +
+      '<text x="' + (L - 12) + '" y="' + (py + 4) + '" fill="' + GOLD + '" font-size="13" font-weight="600" text-anchor="end">7</text>' +
+      '</g>';
+    out += '<circle class="g-ring" cx="' + px + '" cy="' + py + '" r="5" fill="none" stroke="' + GOLD + '" stroke-width="1.2"/>';
+    out += '<circle class="g-point" cx="' + px + '" cy="' + py + '" r="5.5" fill="' + GOLD + '" style="filter: drop-shadow(0 0 7px rgba(212,175,55,0.95))"/>';
+    out += '<text class="g-label" x="' + (px - 14) + '" y="' + (py - 14) + '" fill="' + GOLD + '" font-size="18" font-weight="800" text-anchor="end" stroke="#060606" stroke-width="7" paint-order="stroke" stroke-linejoin="round">(27, 7)</text>';
+    svg.innerHTML = out;
+  })();
+
+  /* ----- Final slide + pop-up ----- */
+  var finalInput = document.getElementById('final');
+  var solve = document.getElementById('solve');
+  var m8 = document.getElementById('m8');
+  var processing = document.getElementById('processing');
+  var modal = document.getElementById('modal');
+  var closeErr = document.getElementById('closeErr');
+  var solving = false;
+
+  function openModal() {
+    stage.setAttribute('inert', '');
+    modal.hidden = false;
+    void modal.offsetWidth;
+    modal.classList.add('show');
+    setTimeout(function () { closeErr.focus(); }, 60);
+  }
+  function closeModal() {
+    modal.classList.remove('show');
+    setTimeout(function () {
+      modal.hidden = true;
+      stage.removeAttribute('inert');
+      solving = false;
+      solve.disabled = false;
+      finalInput.disabled = false;
+      finalInput.value = '';
+      finalInput.focus();
+    }, 320);
+  }
+  function runSolve() {
+    if (solving) return;
+    if (finalInput.value.trim() === '') {
+      m8.textContent = 'Enter a value to solve for.';
+      nudge(finalInput);
+      return;
+    }
+    solving = true;
+    m8.textContent = '';
+    solve.disabled = true;
+    finalInput.disabled = true;
+    processing.classList.add('on');
+    setTimeout(function () {
+      processing.classList.remove('on');
+      openModal();
+    }, 1500);
+  }
+  solve.addEventListener('click', runSolve);
+  finalInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') runSolve(); });
+  closeErr.addEventListener('click', closeModal);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !modal.hidden && modal.classList.contains('show')) closeModal();
+  });
+
+  // start
+  slides.forEach(function (s) { s.setAttribute('inert', ''); s.setAttribute('aria-hidden', 'true'); });
+  go(0);
+})();
+</script>
+</body>
+</html>
